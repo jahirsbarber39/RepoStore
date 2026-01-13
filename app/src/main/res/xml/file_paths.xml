@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<paths>
-    <!-- External storage root - covers Downloads folder -->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- External public storage (includes Downloads) -->
     <external-path
-        name="external_storage"
+        name="external"
         path="." />
     
     <!-- Downloads folder specifically -->
@@ -10,8 +10,23 @@
         name="downloads"
         path="Download/" />
     
-    <!-- App-specific external files -->
+    <!-- Root external storage -->
+    <root-path
+        name="root"
+        path="." />
+    
+    <!-- App external files -->
     <external-files-path
         name="external_files"
+        path="." />
+    
+    <!-- App cache -->
+    <cache-path
+        name="cache"
+        path="." />
+    
+    <!-- App internal files -->
+    <files-path
+        name="files"
         path="." />
 </paths>

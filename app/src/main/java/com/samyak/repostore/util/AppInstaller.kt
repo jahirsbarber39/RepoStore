@@ -171,9 +171,12 @@ class AppInstaller private constructor(private val context: Context) {
                             onStateChanged(InstallState.Installing)
                         }
                         
-                        val file = getDownloadFile(fileName)
-                        if (file != null && file.exists()) {
-                            val installStarted = installApk(file)
+                        // Get the downloaded file URI from DownloadManager
+                        val downloadUri = downloadManager.getUriForDownloadedFile(currentDownloadId)
+                        
+                        if (downloadUri != null) {
+                            Log.d(TAG, "Download URI: $downloadUri")
+                            val installStarted = installApkFromUri(downloadUri)
                             mainHandler.post {
                                 if (installStarted) {
                                     onStateChanged(InstallState.Success)
@@ -183,10 +186,24 @@ class AppInstaller private constructor(private val context: Context) {
                                 cleanup()
                             }
                         } else {
-                            Log.e(TAG, "Downloaded file not found: $fileName")
-                            mainHandler.post {
-                                onStateChanged(InstallState.Error("Downloaded file not found"))
-                                cleanup()
+                            // Fallback to file path
+                            val file = getDownloadFile(fileName)
+                            if (file != null && file.exists()) {
+                                val installStarted = installApk(file)
+                                mainHandler.post {
+                                    if (installStarted) {
+                                        onStateChanged(InstallState.Success)
+                                    } else {
+                                        onStateChanged(InstallState.Error("Failed to start installation"))
+                                    }
+                                    cleanup()
+                                }
+                            } else {
+                                Log.e(TAG, "Downloaded file not found: $fileName")
+                                mainHandler.post {
+                                    onStateChanged(InstallState.Error("Downloaded file not found"))
+                                    cleanup()
+                                }
                             }
                         }
                     }
@@ -268,6 +285,30 @@ class AppInstaller private constructor(private val context: Context) {
         progressRunnable = null
     }
 
+    /**
+     * Install APK using URI from DownloadManager (preferred method)
+     */
+    private fun installApkFromUri(uri: Uri): Boolean {
+        return try {
+            Log.d(TAG, "Installing APK from URI: $uri")
+            
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+            Log.d(TAG, "Install intent started successfully from URI")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Install from URI error: ${e.message}", e)
+            false
+        }
+    }
+
+    /**
+     * Install APK using File with FileProvider (fallback method)
+     */
     private fun installApk(file: File): Boolean {
         return try {
             val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -280,19 +321,44 @@ class AppInstaller private constructor(private val context: Context) {
                 Uri.fromFile(file)
             }
             
-            Log.d(TAG, "Installing APK from: ${file.absolutePath}, URI: $uri")
+            Log.d(TAG, "Installing APK from: ${file.absolutePath}, URI: $uri, File size: ${file.length()}")
             
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(uri, "application/vnd.android.package-archive")
+            // Verify file is valid before installing
+            if (!file.exists() || file.length() == 0L) {
+                Log.e(TAG, "APK file is invalid or empty")
+                return false
+            }
+            
+            val intent = Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
+                data = uri
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
+                putExtra(Intent.EXTRA_RETURN_RESULT, true)
             }
             context.startActivity(intent)
             Log.d(TAG, "Install intent started successfully")
             true
         } catch (e: Exception) {
             Log.e(TAG, "Install error: ${e.message}", e)
-            false
+            // Fallback to ACTION_VIEW
+            try {
+                val uri = FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.provider",
+                    file
+                )
+                val fallbackIntent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, "application/vnd.android.package-archive")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(fallbackIntent)
+                true
+            } catch (e2: Exception) {
+                Log.e(TAG, "Fallback install error: ${e2.message}", e2)
+                false
+            }
         }
     }
 
