@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <img src="screenshots/banner/1.png" />
+  <img src="screensorts/banner/1.png" />
 </p>
 
 ---
