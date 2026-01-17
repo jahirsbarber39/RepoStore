@@ -38,6 +38,12 @@ android {
     buildFeatures {
         viewBinding = true
     }
+    
+    // Disables dependency metadata when building APKs (for IzzyOnDroid/F-Droid)
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
 }
 
 dependencies {
@@ -92,6 +98,9 @@ dependencies {
     
     // Shimmer - Skeleton loading animations
     implementation(libs.shimmer)
+    
+    // DotsIndicator - ViewPager2 page indicators
+    implementation("com.tbuonomo:dotsindicator:5.1.0")
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

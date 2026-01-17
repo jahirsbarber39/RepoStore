@@ -42,21 +42,19 @@
         android:clipChildren="false"
         android:paddingHorizontal="32dp" />
 
-    <!-- Custom dot indicator -->
-    <LinearLayout
-        android:id="@+id/indicator_container"
+    <!-- Worm dots indicator for ViewPager2 -->
+    <com.tbuonomo.viewpagerdotsindicator.WormDotsIndicator
+        android:id="@+id/worm_dots_indicator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="12dp"
         android:layout_marginBottom="8dp"
-        android:orientation="horizontal" />
-
-    <!-- Hidden TabLayout for ViewPager2 connection -->
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tab_indicator"
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:visibility="gone" />
+        app:dotsColor="@color/primary"
+        app:dotsStrokeColor="@color/primary"
+        app:dotsCornerRadius="8dp"
+        app:dotsSize="16dp"
+        app:dotsSpacing="4dp"
+        app:dotsStrokeWidth="2dp" />
 
 </LinearLayout>

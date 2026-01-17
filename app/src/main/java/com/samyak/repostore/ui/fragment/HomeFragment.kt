@@ -4,9 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.LinearLayout
-import androidx.core.content.ContextCompat
+
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -54,7 +52,7 @@ class HomeFragment : Fragment() {
     private lateinit var sectionTrending: SectionAppListBinding
     private lateinit var sectionUpdated: SectionAppListBinding
 
-    private val indicators = mutableListOf<ImageView>()
+
     
     // Shimmer layout for skeleton loading
     private var shimmerLayout: ShimmerFrameLayout? = null
@@ -145,51 +143,13 @@ class HomeFragment : Fragment() {
             }
             setPageTransformer(transformer)
 
-            // Page change callback for indicators
-            registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-                override fun onPageSelected(position: Int) {
-                    updateIndicators(position)
-                }
-            })
+            // No page change callback needed - WormDotsIndicator handles it automatically
         }
     }
 
-    private fun setupIndicators(count: Int) {
-        sectionFeatured.indicatorContainer.removeAllViews()
-        indicators.clear()
-
-        val params = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        ).apply {
-            marginStart = 6
-            marginEnd = 6
-        }
-
-        for (i in 0 until count) {
-            val indicator = ImageView(requireContext()).apply {
-                setImageDrawable(
-                    ContextCompat.getDrawable(
-                        requireContext(),
-                        if (i == 0) R.drawable.indicator_active else R.drawable.indicator_inactive
-                    )
-                )
-                layoutParams = params
-            }
-            indicators.add(indicator)
-            sectionFeatured.indicatorContainer.addView(indicator)
-        }
-    }
-
-    private fun updateIndicators(position: Int) {
-        indicators.forEachIndexed { index, imageView ->
-            imageView.setImageDrawable(
-                ContextCompat.getDrawable(
-                    requireContext(),
-                    if (index == position) R.drawable.indicator_active else R.drawable.indicator_inactive
-                )
-            )
-        }
+    private fun setupWormDotsIndicator() {
+        // Attach WormDotsIndicator to ViewPager2 - handles page changes automatically
+        sectionFeatured.wormDotsIndicator.attachTo(sectionFeatured.viewpagerFeatured)
     }
 
     private fun setupAppSections() {
@@ -336,7 +296,7 @@ class HomeFragment : Fragment() {
         // Featured: top 5 by stars
         val featured = apps.sortedByDescending { it.repo.stars }.take(5)
         featuredAdapter.submitList(featured)
-        setupIndicators(featured.size)
+        setupWormDotsIndicator()
 
         // Trending: next 10
         val trending = apps.sortedByDescending { it.repo.stars }.drop(5).take(10)

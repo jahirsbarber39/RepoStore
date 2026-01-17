@@ -1,0 +1,8 @@
+• Initial release
+• Discover GitHub repositories with APK releases
+• Play Store-style UI with Material 3 design
+• Install and update tracking
+• GitHub sign-in for increased API limits
+• Screenshot gallery with fullscreen viewer
+• README and changelog rendering
+• Dark mode support

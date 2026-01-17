@@ -1,0 +1,1 @@
+GitHub-powered app store to discover, install, and update APKs from GitHub releases.
