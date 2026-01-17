@@ -88,7 +88,7 @@ class ScreenshotViewerActivity : AppCompatActivity() {
     }
 
     private fun updatePageIndicator(position: Int, total: Int) {
-        binding.tvPageIndicator.text = "${position + 1} / $total"
+        binding.tvPageIndicator.text = getString(R.string.page_indicator, position + 1, total)
     }
 
     companion object {

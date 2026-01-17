@@ -1,8 +1,9 @@
 package com.samyak.repostore
 
 import android.app.Application
-import android.content.Context
 import com.samyak.repostore.data.api.RetrofitClient
+import com.samyak.repostore.data.auth.GitHubAuth
+import com.samyak.repostore.data.auth.SecureTokenStorage
 import com.samyak.repostore.data.db.AppDatabase
 import com.samyak.repostore.data.repository.GitHubRepository
 
@@ -15,28 +16,39 @@ class RepoStoreApp : Application() {
         super.onCreate()
 
         // Initialize RetrofitClient with cache
-        val token = getGitHubToken()
-        RetrofitClient.init(this, token)
+        // OAuth token from GitHubAuth takes priority in RetrofitClient
+        RetrofitClient.init(this, null)
     }
 
-    private fun getGitHubToken(): String? {
-        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getString(KEY_GITHUB_TOKEN, null)
-    }
-
-    fun setGitHubToken(token: String?) {
-        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putString(KEY_GITHUB_TOKEN, token).apply()
-        RetrofitClient.setToken(token)
-    }
-
+    /**
+     * Get the stored OAuth token (for display purposes only).
+     * For actual API calls, RetrofitClient uses GitHubAuth.getToken() which uses SecureTokenStorage.
+     */
     fun getStoredToken(): String? {
-        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getString(KEY_GITHUB_TOKEN, null)
+        return GitHubAuth.getToken(this)
     }
 
-    companion object {
-        private const val PREFS_NAME = "github_app_store_prefs"
-        private const val KEY_GITHUB_TOKEN = "github_token"
+    /**
+     * Set a manual GitHub Personal Access Token.
+     * This uses the same secure storage as OAuth tokens.
+     * Pass null to clear the token.
+     */
+    fun setGitHubToken(token: String?) {
+        if (token.isNullOrBlank()) {
+            // Clear the token
+            SecureTokenStorage.signOut(this)
+        } else {
+            // Save the manual token
+            SecureTokenStorage.saveToken(this, token)
+        }
+        // Refresh RetrofitClient to pick up the new token
+        RetrofitClient.refreshAuth()
+    }
+
+    /**
+     * Refresh RetrofitClient auth after sign-in/sign-out
+     */
+    fun refreshAuth() {
+        RetrofitClient.refreshAuth()
     }
 }

@@ -12,6 +12,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.facebook.shimmer.ShimmerFrameLayout
 import com.samyak.repostore.R
 import com.samyak.repostore.RepoStoreApp
 import com.samyak.repostore.data.model.AppItem
@@ -22,6 +23,7 @@ import com.samyak.repostore.ui.adapter.RankedAppAdapter
 import com.samyak.repostore.ui.viewmodel.SearchUiState
 import com.samyak.repostore.ui.viewmodel.SearchViewModel
 import com.samyak.repostore.ui.viewmodel.SearchViewModelFactory
+import com.samyak.repostore.util.RateLimitDialog
 import kotlinx.coroutines.launch
 
 class SearchFragment : Fragment() {
@@ -34,6 +36,9 @@ class SearchFragment : Fragment() {
     }
 
     private lateinit var appAdapter: RankedAppAdapter
+    
+    // Shimmer layout for skeleton loading
+    private var shimmerLayout: ShimmerFrameLayout? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -46,6 +51,10 @@ class SearchFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        
+        // Initialize shimmer layout
+        shimmerLayout = view.findViewById(R.id.skeleton_layout)
+        
         setupSearchBar()
         setupRecyclerView()
         observeViewModel()
@@ -112,34 +121,51 @@ class SearchFragment : Fragment() {
     private fun handleUiState(state: SearchUiState) {
         when (state) {
             is SearchUiState.Idle -> {
-                binding.progressBar.visibility = View.GONE
+                hideSkeleton()
                 binding.rvSearchResults.visibility = View.GONE
                 binding.layoutEmpty.visibility = View.VISIBLE
                 binding.tvMessage.text = getString(R.string.search_hint)
             }
             is SearchUiState.Loading -> {
-                binding.progressBar.visibility = View.VISIBLE
+                showSkeleton()
                 binding.rvSearchResults.visibility = View.GONE
                 binding.layoutEmpty.visibility = View.GONE
             }
             is SearchUiState.Empty -> {
-                binding.progressBar.visibility = View.GONE
+                hideSkeleton()
                 binding.rvSearchResults.visibility = View.GONE
                 binding.layoutEmpty.visibility = View.VISIBLE
                 binding.tvMessage.text = getString(R.string.no_results)
             }
             is SearchUiState.Success -> {
-                binding.progressBar.visibility = View.GONE
+                hideSkeleton()
                 binding.rvSearchResults.visibility = View.VISIBLE
                 binding.layoutEmpty.visibility = View.GONE
                 appAdapter.submitList(state.apps)
             }
             is SearchUiState.Error -> {
-                binding.progressBar.visibility = View.GONE
+                hideSkeleton()
                 binding.rvSearchResults.visibility = View.GONE
                 binding.layoutEmpty.visibility = View.VISIBLE
                 binding.tvMessage.text = state.message
+                
+                // Show rate limit dialog if applicable
+                RateLimitDialog.showIfNeeded(requireContext(), state.message)
             }
+        }
+    }
+    
+    private fun showSkeleton() {
+        shimmerLayout?.apply {
+            visibility = View.VISIBLE
+            startShimmer()
+        }
+    }
+    
+    private fun hideSkeleton() {
+        shimmerLayout?.apply {
+            stopShimmer()
+            visibility = View.GONE
         }
     }
 
@@ -154,6 +180,7 @@ class SearchFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        shimmerLayout = null
         _binding = null
     }
 

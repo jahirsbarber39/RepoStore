@@ -9,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.samyak.repostore.R
 import com.samyak.repostore.databinding.ActivityAboutBinding
 
 class AboutActivity : AppCompatActivity() {
@@ -50,7 +51,7 @@ class AboutActivity : AppCompatActivity() {
         } catch (e: PackageManager.NameNotFoundException) {
             "1.0"
         }
-        binding.tvAppVersion.text = "Version $versionName"
+        binding.tvAppVersion.text = getString(R.string.version_format, versionName)
     }
 
     companion object {

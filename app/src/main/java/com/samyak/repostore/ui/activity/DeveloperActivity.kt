@@ -23,6 +23,7 @@ import com.samyak.repostore.ui.adapter.RankedAppAdapter
 import com.samyak.repostore.ui.viewmodel.DeveloperUiState
 import com.samyak.repostore.ui.viewmodel.DeveloperViewModel
 import com.samyak.repostore.ui.viewmodel.DeveloperViewModelFactory
+import com.samyak.repostore.util.RateLimitDialog
 import kotlinx.coroutines.launch
 
 class DeveloperActivity : AppCompatActivity() {
@@ -180,6 +181,9 @@ class DeveloperActivity : AppCompatActivity() {
                 binding.tvError.setOnClickListener {
                     viewModel.retry()
                 }
+                
+                // Show rate limit dialog if applicable
+                RateLimitDialog.showIfNeeded(this, state.message)
             }
         }
     }

@@ -5,17 +5,123 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Preserve line numbers for debugging stack traces
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep generic signatures (for Gson, Retrofit)
+-keepattributes Signature
+-keepattributes *Annotation*
+-keepattributes Exceptions
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+#======================================
+# Retrofit
+#======================================
+-dontwarn retrofit2.**
+-keep class retrofit2.** { *; }
+-keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
+
+# Keep Retrofit API interfaces
+-keep,allowobfuscation interface * {
+    @retrofit2.http.* <methods>;
+}
+
+#======================================
+# OkHttp
+#======================================
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-keep class okhttp3.** { *; }
+-keep interface okhttp3.** { *; }
+-keep class okio.** { *; }
+
+#======================================
+# Gson
+#======================================
+-dontwarn com.google.gson.**
+-keep class com.google.gson.** { *; }
+-keep class * implements com.google.gson.TypeAdapterFactory
+-keep class * implements com.google.gson.JsonSerializer
+-keep class * implements com.google.gson.JsonDeserializer
+
+# Prevent R8 from stripping interface information (needed for JSON)
+-keep class * extends com.google.gson.TypeAdapter
+-keepclassmembers,allowobfuscation class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+
+#======================================
+# Room
+#======================================
+-keep class * extends androidx.room.RoomDatabase
+-keep @androidx.room.Entity class *
+-dontwarn androidx.room.paging.**
+
+#======================================
+# Glide
+#======================================
+-keep public class * implements com.bumptech.glide.module.GlideModule
+-keep class * extends com.bumptech.glide.module.AppGlideModule {
+    <init>(...);
+}
+-keep public enum com.bumptech.glide.load.ImageHeaderParser$** {
+    **[] $VALUES;
+    public *;
+}
+-keep class com.bumptech.glide.load.data.ParcelFileDescriptorRewinder$InternalRewinder {
+    *** rewind();
+}
+
+#======================================
+# Coroutines
+#======================================
+-keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
+-keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
+-keepclassmembers class kotlinx.coroutines.** {
+    volatile <fields>;
+}
+-keepclassmembernames class kotlinx.** {
+    volatile <fields>;
+}
+
+#======================================
+# App Data Models (keep all fields for JSON serialization)
+#======================================
+-keep class com.samyak.repostore.data.model.** { *; }
+-keep class com.samyak.repostore.data.auth.GitHubAuth$** { *; }
+-keepclassmembers class com.samyak.repostore.data.model.** { *; }
+
+#======================================
+# Security Crypto (EncryptedSharedPreferences)
+#======================================
+-keep class com.google.crypto.tink.** { *; }
+-dontwarn com.google.crypto.tink.**
+
+#======================================
+# Markwon
+#======================================
+-dontwarn io.noties.markwon.**
+-keep class io.noties.markwon.** { *; }
+
+#======================================
+# PhotoView
+#======================================
+-keep class io.getstream.photoview.** { *; }
+
+#======================================
+# Android Framework
+#======================================
+-keep class * extends android.app.Activity
+-keep class * extends android.app.Application
+-keep class * extends android.app.Service
+-keep class * extends android.content.BroadcastReceiver
+-keep class * extends android.content.ContentProvider
+-keep class * extends android.app.Fragment
+-keep class * extends androidx.fragment.app.Fragment
+
+# Keep ViewBinding classes
+-keep class * implements androidx.viewbinding.ViewBinding {
+    public static * bind(android.view.View);
+    public static * inflate(android.view.LayoutInflater);
+    public static * inflate(android.view.LayoutInflater, android.view.ViewGroup, boolean);
+}

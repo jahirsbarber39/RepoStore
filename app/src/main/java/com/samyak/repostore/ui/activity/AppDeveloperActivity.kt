@@ -70,7 +70,7 @@ class AppDeveloperActivity : AppCompatActivity() {
             .into(binding.ivAvatar)
 
         binding.tvName.text = user.name ?: user.login
-        binding.tvUsername.text = "@${user.login}"
+        binding.tvUsername.text = getString(R.string.username_format, user.login)
         
         if (!user.bio.isNullOrEmpty()) {
             binding.tvBio.text = user.bio

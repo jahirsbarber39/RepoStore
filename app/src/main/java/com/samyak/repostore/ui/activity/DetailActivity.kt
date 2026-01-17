@@ -30,6 +30,8 @@ import com.samyak.repostore.ui.viewmodel.DetailUiState
 import com.samyak.repostore.ui.viewmodel.DetailViewModel
 import com.samyak.repostore.ui.viewmodel.DetailViewModelFactory
 import com.samyak.repostore.util.AppInstaller
+import com.facebook.shimmer.ShimmerFrameLayout
+import com.samyak.repostore.util.RateLimitDialog
 import io.noties.markwon.Markwon
 import io.noties.markwon.ext.strikethrough.StrikethroughPlugin
 import io.noties.markwon.ext.tables.TablePlugin
@@ -58,6 +60,9 @@ class DetailActivity : AppCompatActivity() {
     private var repoName: String = ""
     private var currentApkAsset: ReleaseAsset? = null
     private var installedPackageName: String? = null
+    
+    // Shimmer layout for skeleton loading
+    private var shimmerLayout: ShimmerFrameLayout? = null
 
     private val packageInstallReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -88,6 +93,9 @@ class DetailActivity : AppCompatActivity() {
         }
 
         appInstaller = AppInstaller.getInstance(this)
+        
+        // Initialize shimmer layout
+        shimmerLayout = findViewById(R.id.skeleton_layout)
 
         // Register for package install/uninstall events
         val packageFilter = IntentFilter().apply {
@@ -96,7 +104,12 @@ class DetailActivity : AppCompatActivity() {
             addAction(Intent.ACTION_PACKAGE_REPLACED)
             addDataScheme("package")
         }
-        registerReceiver(packageInstallReceiver, packageFilter)
+        // For Android 13+, use RECEIVER_EXPORTED for system broadcasts
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(packageInstallReceiver, packageFilter, Context.RECEIVER_EXPORTED)
+        } else {
+            registerReceiver(packageInstallReceiver, packageFilter)
+        }
 
         setupMarkwon()
         setupToolbar()
@@ -114,6 +127,7 @@ class DetailActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         appInstaller.cancel()
+        shimmerLayout = null
         try {
             unregisterReceiver(packageInstallReceiver)
         } catch (e: Exception) {
@@ -200,25 +214,42 @@ class DetailActivity : AppCompatActivity() {
     private fun handleUiState(state: DetailUiState) {
         when (state) {
             is DetailUiState.Loading -> {
-                binding.progressBar.visibility = View.VISIBLE
+                showSkeleton()
                 binding.scrollContent.visibility = View.GONE
                 binding.tvError.visibility = View.GONE
             }
             is DetailUiState.Success -> {
-                binding.progressBar.visibility = View.GONE
+                hideSkeleton()
                 binding.scrollContent.visibility = View.VISIBLE
                 binding.tvError.visibility = View.GONE
                 bindRepoData(state.repo, state.release)
             }
             is DetailUiState.Error -> {
-                binding.progressBar.visibility = View.GONE
+                hideSkeleton()
                 binding.scrollContent.visibility = View.GONE
                 binding.tvError.visibility = View.VISIBLE
                 binding.tvError.text = "${state.message}\n\n${getString(R.string.tap_to_retry)}"
                 binding.tvError.setOnClickListener {
                     viewModel.retry(owner, repoName)
                 }
+                
+                // Show rate limit dialog if applicable
+                RateLimitDialog.showIfNeeded(this, state.message)
             }
+        }
+    }
+    
+    private fun showSkeleton() {
+        shimmerLayout?.apply {
+            visibility = View.VISIBLE
+            startShimmer()
+        }
+    }
+    
+    private fun hideSkeleton() {
+        shimmerLayout?.apply {
+            stopShimmer()
+            visibility = View.GONE
         }
     }
 

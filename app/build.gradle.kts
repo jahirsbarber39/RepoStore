@@ -12,15 +12,16 @@ android {
         applicationId = "com.samyak.repostore"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -85,6 +86,12 @@ dependencies {
     
     // PhotoView - Zoomable image viewer
     implementation("io.getstream:photoview:1.0.3")
+    
+    // Security - Encrypted SharedPreferences
+    implementation(libs.security.crypto)
+    
+    // Shimmer - Skeleton loading animations
+    implementation(libs.shimmer)
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

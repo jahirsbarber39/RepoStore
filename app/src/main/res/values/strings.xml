@@ -137,6 +137,9 @@
     <string name="unknown_error">Unknown error occurred</string>
     <string name="something_went_wrong">Something went wrong</string>
     <string name="user">\@user</string>
+    <string name="rate_limit_exceeded_title">Rate Limit Exceeded</string>
+    <string name="rate_limit_exceeded_message">You\'ve exceeded the GitHub API rate limit (60 requests/hour).\n\nSign in with GitHub to increase your limit to 5,000 requests/hour for free!</string>
+    <string name="rate_limit_exceeded_signed_in">You\'ve exceeded the authenticated rate limit (5,000 requests/hour). Please wait a few minutes before trying again.</string>
     
     <!-- Donate -->
     <string name="donate">Donate</string>
@@ -157,5 +160,13 @@
     <!-- Open Source Licenses -->
     <string name="open_source_licenses">Open Source Licenses</string>
     <string name="source_code">Source Code</string>
+    
+    <!-- Dynamic content format strings -->
+    <string name="download_progress">%s (%s/%s)</string>
+    <string name="download_starting">0%%</string>
+    <string name="page_indicator">%1$d / %2$d</string>
+    <string name="version_format">Version %s</string>
+    <string name="username_format">\@%s</string>
+    <string name="error_with_retry">%1$s\n\n%2$s</string>
 </resources>
 

@@ -66,17 +66,17 @@ class AppListAdapter(
                 when (item.tag) {
                     AppTag.NEW -> {
                         chipTag.visibility = View.VISIBLE
-                        chipTag.text = "NEW"
+                        chipTag.text = itemView.context.getString(R.string.tag_new)
                         chipTag.setChipBackgroundColorResource(R.color.tag_new)
                     }
                     AppTag.UPDATED -> {
                         chipTag.visibility = View.VISIBLE
-                        chipTag.text = "UPDATED"
+                        chipTag.text = itemView.context.getString(R.string.tag_updated)
                         chipTag.setChipBackgroundColorResource(R.color.tag_updated)
                     }
                     AppTag.ARCHIVED -> {
                         chipTag.visibility = View.VISIBLE
-                        chipTag.text = "ARCHIVED"
+                        chipTag.text = itemView.context.getString(R.string.tag_archived)
                         chipTag.setChipBackgroundColorResource(R.color.tag_archived)
                     }
                     null -> chipTag.visibility = View.GONE

@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.widget.CompositePageTransformer
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
+import com.facebook.shimmer.ShimmerFrameLayout
 import com.google.android.material.tabs.TabLayout
 import com.samyak.repostore.R
 import com.samyak.repostore.RepoStoreApp
@@ -32,6 +33,7 @@ import com.samyak.repostore.ui.viewmodel.HomeUiState
 import com.samyak.repostore.ui.viewmodel.HomeViewModel
 import com.samyak.repostore.ui.viewmodel.HomeViewModelFactory
 import com.samyak.repostore.ui.viewmodel.ListType
+import com.samyak.repostore.util.RateLimitDialog
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
@@ -53,6 +55,9 @@ class HomeFragment : Fragment() {
     private lateinit var sectionUpdated: SectionAppListBinding
 
     private val indicators = mutableListOf<ImageView>()
+    
+    // Shimmer layout for skeleton loading
+    private var shimmerLayout: ShimmerFrameLayout? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -66,6 +71,10 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Initialize shimmer layout from the included layout
+        // ViewBinding exposes included layouts, but ShimmerFrameLayout is the root
+        shimmerLayout = view.findViewById(R.id.skeleton_layout)
+        
         bindSections()
         setupSearchBar()
         setupCategoryTabs()
@@ -263,38 +272,61 @@ class HomeFragment : Fragment() {
 
         when (state) {
             is HomeUiState.Loading -> {
-                binding.progressBar.visibility = View.VISIBLE
+                showSkeleton()
                 binding.scrollView.visibility = View.GONE
                 binding.tvError.visibility = View.GONE
             }
 
             is HomeUiState.Empty -> {
-                binding.progressBar.visibility = View.GONE
+                hideSkeleton()
                 binding.scrollView.visibility = View.GONE
                 binding.tvError.visibility = View.VISIBLE
                 binding.tvError.text = getString(R.string.no_apps_found)
             }
 
             is HomeUiState.LoadingMore -> {
-                binding.progressBar.visibility = View.GONE
+                hideSkeleton()
                 binding.scrollView.visibility = View.VISIBLE
                 binding.tvError.visibility = View.GONE
                 updateSections(state.currentApps)
             }
 
             is HomeUiState.Success -> {
-                binding.progressBar.visibility = View.GONE
+                hideSkeleton()
                 binding.scrollView.visibility = View.VISIBLE
                 binding.tvError.visibility = View.GONE
                 updateSections(state.apps)
             }
 
             is HomeUiState.Error -> {
-                binding.progressBar.visibility = View.GONE
+                hideSkeleton()
                 binding.scrollView.visibility = View.GONE
                 binding.tvError.visibility = View.VISIBLE
                 binding.tvError.text = "${state.message}\n\n${getString(R.string.tap_to_retry)}"
+                
+                // Show rate limit dialog if applicable
+                RateLimitDialog.showIfNeeded(requireContext(), state.message)
             }
+        }
+    }
+    
+    /**
+     * Show skeleton loading animation
+     */
+    private fun showSkeleton() {
+        shimmerLayout?.apply {
+            visibility = View.VISIBLE
+            startShimmer()
+        }
+    }
+    
+    /**
+     * Hide skeleton loading animation
+     */
+    private fun hideSkeleton() {
+        shimmerLayout?.apply {
+            stopShimmer()
+            visibility = View.GONE
         }
     }
 
@@ -326,6 +358,7 @@ class HomeFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        shimmerLayout = null
         _binding = null
     }
 

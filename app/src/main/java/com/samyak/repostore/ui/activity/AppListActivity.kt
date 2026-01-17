@@ -14,15 +14,16 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.facebook.shimmer.ShimmerFrameLayout
 import com.samyak.repostore.R
 import com.samyak.repostore.RepoStoreApp
 import com.samyak.repostore.databinding.ActivityAppListBinding
 import com.samyak.repostore.ui.adapter.RankedAppAdapter
-import com.samyak.repostore.ui.fragment.DetailFragment
 import com.samyak.repostore.ui.viewmodel.AppListViewModel
 import com.samyak.repostore.ui.viewmodel.AppListViewModelFactory
 import com.samyak.repostore.ui.viewmodel.ListType
 import com.samyak.repostore.ui.viewmodel.AppListUiState
+import com.samyak.repostore.util.RateLimitDialog
 import kotlinx.coroutines.launch
 
 class AppListActivity : AppCompatActivity() {
@@ -38,6 +39,9 @@ class AppListActivity : AppCompatActivity() {
     }
 
     private lateinit var appAdapter: RankedAppAdapter
+    
+    // Shimmer layout for skeleton loading
+    private var shimmerLayout: ShimmerFrameLayout? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +55,9 @@ class AppListActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        // Initialize shimmer layout
+        shimmerLayout = findViewById(R.id.skeleton_layout)
 
         setupToolbar()
         setupRecyclerView()
@@ -123,42 +130,64 @@ class AppListActivity : AppCompatActivity() {
 
         when (state) {
             is AppListUiState.Loading -> {
-                binding.progressBar.visibility = View.VISIBLE
+                showSkeleton()
                 binding.rvApps.visibility = View.GONE
                 binding.tvError.visibility = View.GONE
             }
 
             is AppListUiState.LoadingMore -> {
-                binding.progressBar.visibility = View.GONE
+                hideSkeleton()
                 binding.rvApps.visibility = View.VISIBLE
                 binding.tvError.visibility = View.GONE
                 appAdapter.submitList(state.currentApps)
             }
 
             is AppListUiState.Success -> {
-                binding.progressBar.visibility = View.GONE
+                hideSkeleton()
                 binding.rvApps.visibility = View.VISIBLE
                 binding.tvError.visibility = View.GONE
                 appAdapter.submitList(state.apps)
             }
 
             is AppListUiState.Empty -> {
-                binding.progressBar.visibility = View.GONE
+                hideSkeleton()
                 binding.rvApps.visibility = View.GONE
                 binding.tvError.visibility = View.VISIBLE
                 binding.tvError.text = getString(R.string.no_apps_found)
             }
 
             is AppListUiState.Error -> {
-                binding.progressBar.visibility = View.GONE
+                hideSkeleton()
                 binding.rvApps.visibility = View.GONE
                 binding.tvError.visibility = View.VISIBLE
                 binding.tvError.text = "${state.message}\n\n${getString(R.string.tap_to_retry)}"
                 binding.tvError.setOnClickListener {
                     viewModel.retry()
                 }
+                
+                // Show rate limit dialog if applicable
+                RateLimitDialog.showIfNeeded(this, state.message)
             }
         }
+    }
+    
+    private fun showSkeleton() {
+        shimmerLayout?.apply {
+            visibility = View.VISIBLE
+            startShimmer()
+        }
+    }
+    
+    private fun hideSkeleton() {
+        shimmerLayout?.apply {
+            stopShimmer()
+            visibility = View.GONE
+        }
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        shimmerLayout = null
     }
 
     companion object {

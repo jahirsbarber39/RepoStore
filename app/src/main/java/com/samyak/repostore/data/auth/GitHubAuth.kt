@@ -17,15 +17,12 @@ import okhttp3.Request
  * Rate limits:
  * - Without auth: 60 requests/hour
  * - With auth: 5,000 requests/hour
+ * 
+ * Uses SecureTokenStorage for encrypted token persistence.
  */
 object GitHubAuth {
 
     private const val TAG = "GitHubAuth"
-    private const val PREFS_NAME = "github_auth"
-    private const val KEY_TOKEN = "access_token"
-    private const val KEY_USER_LOGIN = "user_login"
-    private const val KEY_USER_AVATAR = "user_avatar"
-    private const val KEY_USER_NAME = "user_name"
 
     // GitHub OAuth App Client ID
     // TO GET YOUR OWN CLIENT ID:
@@ -193,46 +190,33 @@ object GitHubAuth {
         }
     }
 
-    // Token management
+    // Token management - delegated to SecureTokenStorage
     fun saveToken(context: Context, token: String) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putString(KEY_TOKEN, token)
-            .apply()
+        SecureTokenStorage.saveToken(context, token)
     }
 
     fun getToken(context: Context): String? {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getString(KEY_TOKEN, null)
+        return SecureTokenStorage.getToken(context)
     }
 
     fun isSignedIn(context: Context): Boolean {
-        return getToken(context) != null
+        return SecureTokenStorage.isSignedIn(context)
     }
 
     fun saveUser(context: Context, user: GitHubUser) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putString(KEY_USER_LOGIN, user.login)
-            .putString(KEY_USER_AVATAR, user.avatarUrl)
-            .putString(KEY_USER_NAME, user.name)
-            .apply()
+        SecureTokenStorage.saveUser(context, user.login, user.avatarUrl, user.name)
     }
 
     fun getUser(context: Context): GitHubUser? {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val login = prefs.getString(KEY_USER_LOGIN, null) ?: return null
+        val login = SecureTokenStorage.getUserLogin(context) ?: return null
         return GitHubUser(
             login = login,
-            avatarUrl = prefs.getString(KEY_USER_AVATAR, null),
-            name = prefs.getString(KEY_USER_NAME, null)
+            avatarUrl = SecureTokenStorage.getUserAvatar(context),
+            name = SecureTokenStorage.getUserName(context)
         )
     }
 
     fun signOut(context: Context) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .clear()
-            .apply()
+        SecureTokenStorage.signOut(context)
     }
 }

@@ -31,6 +31,7 @@ import io.noties.markwon.ext.tables.TablePlugin
 import io.noties.markwon.html.HtmlPlugin
 import io.noties.markwon.image.glide.GlideImagesPlugin
 import io.noties.markwon.linkify.LinkifyPlugin
+import com.samyak.repostore.util.RateLimitDialog
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -178,6 +179,9 @@ class DetailFragment : Fragment() {
                 binding.tvError.setOnClickListener {
                     viewModel.retry(owner, repoName)
                 }
+                
+                // Show rate limit dialog if applicable
+                RateLimitDialog.showIfNeeded(requireContext(), state.message)
             }
         }
     }

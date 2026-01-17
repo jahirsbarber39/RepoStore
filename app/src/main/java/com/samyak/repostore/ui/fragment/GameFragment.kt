@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.widget.CompositePageTransformer
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
+import com.facebook.shimmer.ShimmerFrameLayout
 import com.samyak.repostore.R
 import com.samyak.repostore.RepoStoreApp
 import com.samyak.repostore.data.model.AppCategory
@@ -31,6 +32,7 @@ import com.samyak.repostore.ui.viewmodel.GameUiState
 import com.samyak.repostore.ui.viewmodel.GameViewModel
 import com.samyak.repostore.ui.viewmodel.GameViewModelFactory
 import com.samyak.repostore.ui.viewmodel.ListType
+import com.samyak.repostore.util.RateLimitDialog
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
@@ -52,6 +54,9 @@ class GameFragment : Fragment() {
     private lateinit var sectionNew: SectionAppListBinding
 
     private val indicators = mutableListOf<ImageView>()
+    
+    // Shimmer layout for skeleton loading
+    private var shimmerLayout: ShimmerFrameLayout? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -64,6 +69,9 @@ class GameFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Initialize shimmer layout
+        shimmerLayout = view.findViewById(R.id.skeleton_layout)
 
         bindSections()
         setupFeaturedCarousel()
@@ -226,38 +234,61 @@ class GameFragment : Fragment() {
 
         when (state) {
             is GameUiState.Loading -> {
-                binding.progressBar.visibility = View.VISIBLE
+                showSkeleton()
                 binding.scrollView.visibility = View.GONE
                 binding.tvError.visibility = View.GONE
             }
 
             is GameUiState.Empty -> {
-                binding.progressBar.visibility = View.GONE
+                hideSkeleton()
                 binding.scrollView.visibility = View.GONE
                 binding.tvError.visibility = View.VISIBLE
                 binding.tvError.text = getString(R.string.no_games_found)
             }
 
             is GameUiState.LoadingMore -> {
-                binding.progressBar.visibility = View.GONE
+                hideSkeleton()
                 binding.scrollView.visibility = View.VISIBLE
                 binding.tvError.visibility = View.GONE
                 updateSections(state.currentGames)
             }
 
             is GameUiState.Success -> {
-                binding.progressBar.visibility = View.GONE
+                hideSkeleton()
                 binding.scrollView.visibility = View.VISIBLE
                 binding.tvError.visibility = View.GONE
                 updateSections(state.games)
             }
 
             is GameUiState.Error -> {
-                binding.progressBar.visibility = View.GONE
+                hideSkeleton()
                 binding.scrollView.visibility = View.GONE
                 binding.tvError.visibility = View.VISIBLE
                 binding.tvError.text = "${state.message}\n\n${getString(R.string.tap_to_retry)}"
+                
+                // Show rate limit dialog if applicable
+                RateLimitDialog.showIfNeeded(requireContext(), state.message)
             }
+        }
+    }
+    
+    /**
+     * Show skeleton loading animation
+     */
+    private fun showSkeleton() {
+        shimmerLayout?.apply {
+            visibility = View.VISIBLE
+            startShimmer()
+        }
+    }
+    
+    /**
+     * Hide skeleton loading animation
+     */
+    private fun hideSkeleton() {
+        shimmerLayout?.apply {
+            stopShimmer()
+            visibility = View.GONE
         }
     }
 
@@ -289,6 +320,7 @@ class GameFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        shimmerLayout = null
         _binding = null
     }
 

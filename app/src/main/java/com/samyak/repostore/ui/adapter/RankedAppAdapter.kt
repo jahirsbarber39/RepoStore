@@ -65,12 +65,12 @@ class RankedAppAdapter(
                 when (item.tag) {
                     AppTag.NEW -> {
                         chipTag.visibility = View.VISIBLE
-                        chipTag.text = "NEW"
+                        chipTag.text = itemView.context.getString(R.string.tag_new)
                         chipTag.setChipBackgroundColorResource(R.color.tag_new)
                     }
                     AppTag.UPDATED -> {
                         chipTag.visibility = View.VISIBLE
-                        chipTag.text = "UPDATED"
+                        chipTag.text = itemView.context.getString(R.string.tag_updated)
                         chipTag.setChipBackgroundColorResource(R.color.tag_updated)
                     }
                     else -> chipTag.visibility = View.GONE
