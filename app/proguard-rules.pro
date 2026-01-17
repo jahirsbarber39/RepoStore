@@ -36,19 +36,35 @@
 -keep class okio.** { *; }
 
 #======================================
-# Gson
+# Gson - CRITICAL: Preserve TypeToken generics
 #======================================
 -dontwarn com.google.gson.**
 -keep class com.google.gson.** { *; }
--keep class * implements com.google.gson.TypeAdapterFactory
--keep class * implements com.google.gson.JsonSerializer
--keep class * implements com.google.gson.JsonDeserializer
 
-# Prevent R8 from stripping interface information (needed for JSON)
--keep class * extends com.google.gson.TypeAdapter
+# Preserve generic type information for TypeToken
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
+
+# Keep TypeToken and its subclasses with generic signature
 -keepclassmembers,allowobfuscation class * {
     @com.google.gson.annotations.SerializedName <fields>;
 }
+
+# Keep TypeAdapters
+-keep class * implements com.google.gson.TypeAdapterFactory
+-keep class * implements com.google.gson.JsonSerializer
+-keep class * implements com.google.gson.JsonDeserializer
+-keep class * extends com.google.gson.TypeAdapter
+
+# Prevent R8 from stripping generic signature (CRITICAL)
+-keepattributes Signature
+-keepattributes EnclosingMethod
+-keepattributes InnerClasses
+
+# Keep all classes that use Gson for serialization
+-keep class com.samyak.repostore.data.** { *; }
+-keep class com.samyak.repostore.data.model.** { <fields>; <init>(...); }
+-keep class com.samyak.repostore.data.auth.** { <fields>; <init>(...); }
 
 #======================================
 # Room
