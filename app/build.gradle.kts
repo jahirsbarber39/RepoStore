@@ -96,8 +96,6 @@ dependencies {
     // Security - Encrypted SharedPreferences
     implementation(libs.security.crypto)
     
-    // Shimmer - Skeleton loading animations
-    implementation(libs.shimmer)
     
     // DotsIndicator - ViewPager2 page indicators
     implementation("com.tbuonomo:dotsindicator:5.1.0")

@@ -30,7 +30,7 @@ import com.samyak.repostore.ui.viewmodel.DetailUiState
 import com.samyak.repostore.ui.viewmodel.DetailViewModel
 import com.samyak.repostore.ui.viewmodel.DetailViewModelFactory
 import com.samyak.repostore.util.AppInstaller
-import com.facebook.shimmer.ShimmerFrameLayout
+import com.samyak.repostore.ui.widget.ShimmerFrameLayout
 import com.samyak.repostore.util.RateLimitDialog
 import io.noties.markwon.Markwon
 import io.noties.markwon.ext.strikethrough.StrikethroughPlugin

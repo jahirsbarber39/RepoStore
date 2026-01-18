@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.widget.CompositePageTransformer
 import androidx.viewpager2.widget.MarginPageTransformer
 import androidx.viewpager2.widget.ViewPager2
-import com.facebook.shimmer.ShimmerFrameLayout
+import com.samyak.repostore.ui.widget.ShimmerFrameLayout
 import com.google.android.material.tabs.TabLayout
 import com.samyak.repostore.R
 import com.samyak.repostore.RepoStoreApp

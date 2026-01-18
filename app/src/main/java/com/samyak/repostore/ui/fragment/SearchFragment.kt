@@ -12,7 +12,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.facebook.shimmer.ShimmerFrameLayout
+import com.samyak.repostore.ui.widget.ShimmerFrameLayout
 import com.samyak.repostore.R
 import com.samyak.repostore.RepoStoreApp
 import com.samyak.repostore.data.model.AppItem
