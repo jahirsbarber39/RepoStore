@@ -2,108 +2,54 @@ package com.samyak.repostore.data.auth
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
+import android.util.Base64
 
 /**
- * Secure token storage using EncryptedSharedPreferences.
- * Provides encrypted storage for sensitive data like OAuth tokens.
+ * Token storage using SharedPreferences with basic obfuscation.
+ * F-Droid compatible - no external dependencies that trigger tracker flags.
  * 
- * Features:
- * - AES-256 encryption for keys and values
- * - Automatic migration from legacy plain SharedPreferences
- * - Thread-safe singleton access
+ * Note: For a FOSS app, using regular SharedPreferences is acceptable.
+ * The token is only used for API rate limits, not for accessing private data.
  */
 object SecureTokenStorage {
 
     private const val TAG = "SecureTokenStorage"
-    private const val ENCRYPTED_PREFS_NAME = "github_auth_secure"
-    private const val LEGACY_PREFS_NAME = "github_auth"
+    private const val PREFS_NAME = "github_auth_storage"
     
     // Keys
-    private const val KEY_TOKEN = "access_token"
+    private const val KEY_TOKEN = "at_v1"
     private const val KEY_USER_LOGIN = "user_login"
     private const val KEY_USER_AVATAR = "user_avatar"
     private const val KEY_USER_NAME = "user_name"
-    private const val KEY_MIGRATED = "migrated_from_legacy"
 
-    @Volatile
-    private var encryptedPrefs: SharedPreferences? = null
-
-    /**
-     * Get or create the encrypted SharedPreferences instance.
-     * Also handles migration from legacy unencrypted prefs.
-     */
-    fun getEncryptedPrefs(context: Context): SharedPreferences {
-        return encryptedPrefs ?: synchronized(this) {
-            encryptedPrefs ?: createEncryptedPrefs(context).also { 
-                encryptedPrefs = it
-                migrateFromLegacyIfNeeded(context, it)
-            }
-        }
+    private fun getPrefs(context: Context): SharedPreferences {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
-    private fun createEncryptedPrefs(context: Context): SharedPreferences {
-        return try {
-            val masterKey = MasterKey.Builder(context)
-                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                .build()
-
-            EncryptedSharedPreferences.create(
-                context,
-                ENCRYPTED_PREFS_NAME,
-                masterKey,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            )
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to create encrypted prefs, falling back to regular prefs", e)
-            // Fallback to regular SharedPreferences if encryption fails
-            context.getSharedPreferences(ENCRYPTED_PREFS_NAME, Context.MODE_PRIVATE)
-        }
+    // Simple obfuscation (base64) - not true encryption, but hides plain text
+    private fun encode(value: String): String {
+        return Base64.encodeToString(value.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
     }
 
-    /**
-     * Migrate tokens from legacy unencrypted SharedPreferences.
-     * This ensures existing users don't lose their login.
-     */
-    private fun migrateFromLegacyIfNeeded(context: Context, encryptedPrefs: SharedPreferences) {
-        if (encryptedPrefs.getBoolean(KEY_MIGRATED, false)) {
-            return // Already migrated
-        }
-
-        val legacyPrefs = context.getSharedPreferences(LEGACY_PREFS_NAME, Context.MODE_PRIVATE)
-        val legacyToken = legacyPrefs.getString(KEY_TOKEN, null)
-
-        if (legacyToken != null) {
-            Log.d(TAG, "Migrating token from legacy storage to encrypted storage")
-            
-            encryptedPrefs.edit().apply {
-                putString(KEY_TOKEN, legacyToken)
-                putString(KEY_USER_LOGIN, legacyPrefs.getString(KEY_USER_LOGIN, null))
-                putString(KEY_USER_AVATAR, legacyPrefs.getString(KEY_USER_AVATAR, null))
-                putString(KEY_USER_NAME, legacyPrefs.getString(KEY_USER_NAME, null))
-                putBoolean(KEY_MIGRATED, true)
-                apply()
-            }
-
-            // Clear legacy prefs after successful migration
-            legacyPrefs.edit().clear().apply()
-            Log.d(TAG, "Migration complete, legacy prefs cleared")
-        } else {
-            // No legacy data, just mark as migrated
-            encryptedPrefs.edit().putBoolean(KEY_MIGRATED, true).apply()
-        }
+    private fun decode(value: String): String {
+        return String(Base64.decode(value, Base64.NO_WRAP), Charsets.UTF_8)
     }
 
     // Token operations
     fun saveToken(context: Context, token: String) {
-        getEncryptedPrefs(context).edit().putString(KEY_TOKEN, token).apply()
+        getPrefs(context).edit().putString(KEY_TOKEN, encode(token)).apply()
     }
 
     fun getToken(context: Context): String? {
-        return getEncryptedPrefs(context).getString(KEY_TOKEN, null)
+        val encoded = getPrefs(context).getString(KEY_TOKEN, null)
+        return encoded?.let {
+            try {
+                decode(it)
+            } catch (e: Exception) {
+                // If decoding fails, might be old plain token, return as-is
+                it
+            }
+        }
     }
 
     fun isSignedIn(context: Context): Boolean {
@@ -112,7 +58,7 @@ object SecureTokenStorage {
 
     // User info operations
     fun saveUser(context: Context, login: String, avatarUrl: String?, name: String?) {
-        getEncryptedPrefs(context).edit().apply {
+        getPrefs(context).edit().apply {
             putString(KEY_USER_LOGIN, login)
             putString(KEY_USER_AVATAR, avatarUrl)
             putString(KEY_USER_NAME, name)
@@ -121,20 +67,20 @@ object SecureTokenStorage {
     }
 
     fun getUserLogin(context: Context): String? {
-        return getEncryptedPrefs(context).getString(KEY_USER_LOGIN, null)
+        return getPrefs(context).getString(KEY_USER_LOGIN, null)
     }
 
     fun getUserAvatar(context: Context): String? {
-        return getEncryptedPrefs(context).getString(KEY_USER_AVATAR, null)
+        return getPrefs(context).getString(KEY_USER_AVATAR, null)
     }
 
     fun getUserName(context: Context): String? {
-        return getEncryptedPrefs(context).getString(KEY_USER_NAME, null)
+        return getPrefs(context).getString(KEY_USER_NAME, null)
     }
 
     // Sign out
     fun signOut(context: Context) {
-        getEncryptedPrefs(context).edit().apply {
+        getPrefs(context).edit().apply {
             remove(KEY_TOKEN)
             remove(KEY_USER_LOGIN)
             remove(KEY_USER_AVATAR)
@@ -144,10 +90,9 @@ object SecureTokenStorage {
     }
 
     /**
-     * Clear all data including migration flag.
-     * Use with caution - mainly for testing.
+     * Clear all data.
      */
     fun clearAll(context: Context) {
-        getEncryptedPrefs(context).edit().clear().apply()
+        getPrefs(context).edit().clear().apply()
     }
 }

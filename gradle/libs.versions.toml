@@ -19,7 +19,6 @@ fragment = "1.6.2"
 swiperefresh = "1.1.0"
 room = "2.6.1"
 markwon = "4.6.2"
-securityCrypto = "1.1.0-alpha06"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -51,7 +50,6 @@ markwon-linkify = { group = "io.noties.markwon", name = "linkify", version.ref =
 markwon-tables = { group = "io.noties.markwon", name = "ext-tables", version.ref = "markwon" }
 markwon-strikethrough = { group = "io.noties.markwon", name = "ext-strikethrough", version.ref = "markwon" }
 markwon-html = { group = "io.noties.markwon", name = "html", version.ref = "markwon" }
-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

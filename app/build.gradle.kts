@@ -93,10 +93,6 @@ dependencies {
     // PhotoView - Zoomable image viewer
     implementation("io.getstream:photoview:1.0.3")
     
-    // Security - Encrypted SharedPreferences
-    implementation(libs.security.crypto)
-    
-    
     // DotsIndicator - ViewPager2 page indicators
     implementation("com.tbuonomo:dotsindicator:5.1.0")
     
