@@ -37,7 +37,9 @@ object GitHubAuth {
     private const val ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token"
     private const val USER_API_URL = "https://api.github.com/user"
     
-    private const val SCOPE = "read:user"
+    // No scopes requested - only using auth for increased rate limits (5000/hour vs 60/hour)
+    // This grants ZERO permissions to the app - read-only access to public data only
+    private const val SCOPE = ""
     private const val MAX_POLL_ATTEMPTS = 60 // 5 minutes max
 
     private val client = OkHttpClient()
