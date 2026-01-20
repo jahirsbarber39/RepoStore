@@ -51,7 +51,7 @@ class GitHubRepository(private val repoDao: RepoDao) {
     }
 
     /**
-     * Check if repo has APK in latest release
+     * Check if repo has APK in releases - prioritizes stable releases
      */
     private suspend fun repoHasApk(owner: String, repoName: String): Boolean {
         val cacheKey = "$owner/$repoName"
@@ -60,13 +60,31 @@ class GitHubRepository(private val repoDao: RepoDao) {
         apkReposCache[cacheKey]?.let { return it }
         
         return try {
-            val release = api.getLatestRelease(owner, repoName)
-            val hasApk = hasInstallableAsset(release)
-            apkReposCache[cacheKey] = hasApk
-            if (hasApk) {
-                releaseCache[cacheKey] = release
+            // Fetch up to 10 releases to find one with APK
+            val releases = api.getReleases(owner, repoName, perPage = 10)
+            
+            // First, look for stable releases (non-draft, non-prerelease)
+            val stableRelease = releases.firstOrNull { release ->
+                !release.draft && !release.prerelease && hasInstallableAsset(release)
             }
-            hasApk
+            
+            if (stableRelease != null) {
+                apkReposCache[cacheKey] = true
+                releaseCache[cacheKey] = stableRelease
+                return true
+            }
+            
+            // If no stable release, check any release with APK
+            for (release in releases) {
+                if (hasInstallableAsset(release)) {
+                    apkReposCache[cacheKey] = true
+                    releaseCache[cacheKey] = release
+                    return true
+                }
+            }
+            
+            apkReposCache[cacheKey] = false
+            false
         } catch (e: Exception) {
             apkReposCache[cacheKey] = false
             false
@@ -98,7 +116,8 @@ class GitHubRepository(private val repoDao: RepoDao) {
 
     suspend fun searchApps(query: String, page: Int = 1): Result<List<AppItem>> = withContext(Dispatchers.IO) {
         try {
-            val searchQuery = "$query in:name,description topic:android"
+            // Search in name, description, and readme without requiring android topic
+            val searchQuery = "$query in:name,description,readme"
             val response = api.searchRepositories(searchQuery, perPage = 30, page = page)
 
             // Filter to only repos with APK releases
