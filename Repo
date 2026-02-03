@@ -1,0 +1,23 @@
+FATAL EXCEPTION: GoogleApiHandler
+Process: com.google.android.configupdater, PID: 27243
+java.lang.IllegalArgumentException: com.google.android.configupdater: Targeting S+ (version 31 and above) requires that one of FLAG_IMMUTABLE or FLAG_MUTABLE be specified when creating a PendingIntent.
+Strongly consider using FLAG_IMMUTABLE, only use FLAG_MUTABLE if some functionality depends on the PendingIntent being mutable, e.g. if it needs to be used with inline replies or bubbles.
+	at android.app.PendingIntent.checkFlags(PendingIntent.java:412)
+	at android.app.PendingIntent.getActivityAsUser(PendingIntent.java:495)
+	at android.app.PendingIntent.getActivity(PendingIntent.java:481)
+	at android.app.PendingIntent.getActivity(PendingIntent.java:445)
+	at com.google.android.gms.common.GoogleApiAvailabilityLight.getErrorResolutionPendingIntent(GoogleApiAvailabilityLight.java:23)
+	at com.google.android.gms.common.GoogleApiAvailability.getErrorResolutionPendingIntent(GoogleApiAvailability.java:87)
+	at com.google.android.gms.common.GoogleApiAvailabilityLight.getErrorResolutionPendingIntent(GoogleApiAvailabilityLight.java:19)
+	at com.google.android.gms.common.GoogleApiAvailability.getErrorResolutionPendingIntent(GoogleApiAvailability.java:83)
+	at com.google.android.gms.common.GoogleApiAvailability.getErrorResolutionPendingIntent(GoogleApiAvailability.java:86)
+	at com.google.android.gms.common.GoogleApiAvailability.zza(GoogleApiAvailability.java:39)
+	at com.google.android.gms.common.api.internal.zzbp.zzc(GoogleApiManager.java:201)
+	at com.google.android.gms.common.api.internal.zzbr.onConnectionFailed(GoogleApiManager.java:80)
+	at com.google.android.gms.common.api.internal.zzbr.connect(GoogleApiManager.java:174)
+	at com.google.android.gms.common.api.internal.zzbr.zza(GoogleApiManager.java:99)
+	at com.google.android.gms.common.api.internal.zzbp.handleMessage(GoogleApiManager.java:152)
+	at android.os.Handler.dispatchMessage(Handler.java:110)
+	at android.os.Looper.loopOnce(Looper.java:206)
+	at android.os.Looper.loop(Looper.java:296)
+	at android.os.HandlerThread.run(HandlerThread.java:67)
